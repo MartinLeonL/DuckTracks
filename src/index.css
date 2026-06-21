@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+    background-color: #0f172a;
+    color: #f1f5f9;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 2px;
+  }
+}
+
+@layer utilities {
+  .duck-sprite {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .rarity-common    { --rarity-color: #22c55e; --rarity-bg: #14532d; }
+  .rarity-rare      { --rarity-color: #3b82f6; --rarity-bg: #1e3a5f; }
+  .rarity-epic      { --rarity-color: #a855f7; --rarity-bg: #3b0764; }
+  .rarity-legendary { --rarity-color: #eab308; --rarity-bg: #422006; }
+  .rarity-mythic    { --rarity-color: #ef4444; --rarity-bg: #450a0a; }
+
+  .podium-glow-common    { box-shadow: 0 0 20px 4px rgba(34,197,94,0.35); }
+  .podium-glow-rare      { box-shadow: 0 0 20px 4px rgba(59,130,246,0.35); }
+  .podium-glow-epic      { box-shadow: 0 0 20px 4px rgba(168,85,247,0.35); }
+  .podium-glow-legendary { box-shadow: 0 0 20px 4px rgba(234,179,8,0.35); }
+  .podium-glow-mythic    { box-shadow: 0 0 20px 4px rgba(239,68,68,0.35); }
+
+  .glass {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .pond-water {
+    background: linear-gradient(180deg,
+      rgba(6,182,212,0.25) 0%,
+      rgba(14,116,144,0.35) 50%,
+      rgba(8,145,178,0.25) 100%
+    );
+  }
+}
+
+/* Ripple rings in pond */
+.ripple-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(125,211,252,0.4);
+  animation: ripple 3s linear infinite;
+}
+
+/* Gacha box flash */
+.gacha-flash-common    { background: radial-gradient(circle, #22c55e 0%, #14532d 100%); }
+.gacha-flash-rare      { background: radial-gradient(circle, #3b82f6 0%, #1e3a5f 100%); }
+.gacha-flash-epic      { background: radial-gradient(circle, #a855f7 0%, #3b0764 100%); }
+.gacha-flash-legendary { background: radial-gradient(circle, #eab308 0%, #422006 100%); }
+.gacha-flash-mythic    { background: radial-gradient(circle, #ef4444 0%, #450a0a 100%); }
