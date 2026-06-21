@@ -19,7 +19,7 @@ export default function Podium({ duck, owned, trophyCount = 0, isTrophy = false 
         className={`relative ${owned ? "animate-bob" : ""}`}
         style={{ animationDelay: `${Math.random() * 2}s` }}
       >
-        <DuckSprite duck={duck} size={64} silhouette={silhouette} />
+        <DuckSprite duck={duck} size={96} silhouette={silhouette} />
         {isTrophy && trophyCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-[10px] font-black rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center shadow-lg leading-none">
             {trophyCount}

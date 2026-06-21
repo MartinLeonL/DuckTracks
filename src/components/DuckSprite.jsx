@@ -1,7 +1,7 @@
 import React from "react";
 import { SPRITE_URL, SPRITE_CELL } from "../supabaseClient";
 
-export default function DuckSprite({ duck, size = 200, silhouette = false, className = "", columns = 12 }) {
+export default function DuckSprite({ duck, size = 200, silhouette = false, className = "", columns = 20 }) {
   if (!duck) return null;
 
   const scale = size / SPRITE_CELL;

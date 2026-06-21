@@ -108,7 +108,7 @@ export default function DuckPond({ ownedDucks = [] }) {
               className="absolute rounded-full bg-black/20 blur-sm"
               style={{ width: 36, height: 8, bottom: -4, left: "50%", transform: "translateX(-50%)" }}
             />
-            <DuckSprite duck={duck} size={56} />
+            <DuckSprite duck={duck} size={64} />
           </div>
         ))
       )}
