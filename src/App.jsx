@@ -5,7 +5,7 @@ import { fetchAllDucks } from "./supabaseClient";
 import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage";
 
 import CoinDisplay from "./components/CoinDisplay";
-import ClockDisplay from "./components/ClockDisplay"; // <-- NEW
+import ClockDisplay from "./components/ClockDisplay";
 import TasksScreen from "./screens/TasksScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import CollectionScreen from "./screens/CollectionScreen";
@@ -18,14 +18,21 @@ const NAV_ITEMS = [
   { id: "store",      label: "Store",      Icon: ShoppingBag },
 ];
 
+function toLocalYMD(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 function todayYMD() {
-  return new Date().toISOString().split("T")[0];
+  return toLocalYMD(new Date());
 }
 
 function yesterdayYMD() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
+  return toLocalYMD(d);
 }
 
 export default function App() {
@@ -33,6 +40,7 @@ export default function App() {
   const [allDucks, setAllDucks] = useState([]);
   const [ducksLoading, setDucksLoading] = useState(true);
   const [ducksError, setDucksError] = useState(null);
+  const [startupMessage, setStartupMessage] = useState(null);
 
   const { coins, addCoins, spendCoins } = useCoins();
   const {
@@ -68,21 +76,26 @@ export default function App() {
   useEffect(() => {
     const today = todayYMD();
     if (lastOpenedDate === today) return;
+
     if (lastOpenedDate && lastOpenedDate < today) {
       const yesterday = yesterdayYMD();
-      
-      // --- NEW MIDNIGHT BONUS LOGIC ---
-      const yesterdaysTasks = getTasksForDate(yesterday);
-      if (yesterdaysTasks.length > 0 && yesterdaysTasks.every(t => t.completed)) {
-        addCoins(5);
-        alert("Awesome job! You earned 5 bonus coins for completing all your tasks yesterday!");
-      }
-      // --------------------------------
 
+      // Check if all of yesterday's tasks were completed — award bonus if so
+      const yesterdaysTasks = getTasksForDate(yesterday);
+      if (yesterdaysTasks.length > 0 && yesterdaysTasks.every((t) => t.completed)) {
+        addCoins(5);
+        setStartupMessage({
+          text: "You completed all your tasks yesterday!",
+          subtext: "+5 bonus coins added to your balance.",
+        });
+      }
+
+      // Penalise incomplete tasks from the previous day
       const penaltyDay = lastOpenedDate >= yesterday ? lastOpenedDate : yesterday;
       const penaltyCount = processDayReset(penaltyDay);
       if (penaltyCount > 0) addCoins(-penaltyCount);
     }
+
     setLastOpenedDate(today);
   }, []); // eslint-disable-line
 
@@ -94,7 +107,7 @@ export default function App() {
       <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800 glass z-10">
         <h1 className="text-base font-black text-emerald-400 tracking-tight">DuckTracks</h1>
         <div className="flex items-center">
-          <ClockDisplay /> 
+          <ClockDisplay />
           <CoinDisplay coins={coins} />
         </div>
       </header>
@@ -178,6 +191,24 @@ export default function App() {
           ))}
         </div>
       </nav>
+
+      {/* Startup notification — shown once per new day if bonus was earned */}
+      {startupMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-slideUp">
+            <div className="text-4xl mb-3">🎉</div>
+            <h3 className="text-lg font-black text-emerald-400">Great work!</h3>
+            <p className="text-slate-300 text-sm mt-2">{startupMessage.text}</p>
+            <p className="text-yellow-300 font-bold mt-3">{startupMessage.subtext}</p>
+            <button
+              onClick={() => setStartupMessage(null)}
+              className="mt-5 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors"
+            >
+              Collect
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

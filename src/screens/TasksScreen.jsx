@@ -1,10 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Plus, Star } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { Plus } from "lucide-react";
 import DuckPond from "../components/DuckPond";
 import TaskItem from "../components/TaskItem";
 import TaskForm from "../components/TaskForm";
 import ConfirmDialog from "../components/ConfirmDialog";
-import { useDailyBonusClaimed } from "../hooks/useLocalStorage";
 
 export default function TasksScreen({
   todayTasks,
@@ -21,33 +20,21 @@ export default function TasksScreen({
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [showBonus, setShowBonus] = useState(false);
   const [coinPop, setCoinPop] = useState(null);
-
-  const [bonusClaimedDate, setBonusClaimedDate] = useDailyBonusClaimed();
 
   const ownedDucks = allDucks.filter((d) => ownedDuckIds.includes(d.id));
   const completedCount = todayTasks.filter((t) => t.completed).length;
-  const allDone = todayTasks.length > 0 && completedCount === todayTasks.length;
-  const bonusAlreadyClaimed = bonusClaimedDate === today;
-
-  useEffect(() => {
-    if (allDone && !bonusAlreadyClaimed) {
-      setShowBonus(true);
-    }
-  }, [allDone, bonusAlreadyClaimed]);
 
   const handleComplete = useCallback(
     (task, e) => {
       completeTask(task.id, today);
-      
-      // Determine reward based on task size
+
       let reward = 1;
-      if (task.size === 'medium') reward = 3;
-      if (task.size === 'large') reward = 5;
-      
+      if (task.size === "medium") reward = 3;
+      if (task.size === "large") reward = 5;
+
       addCoins(reward);
-      
+
       if (e?.currentTarget) {
         const rect = e.currentTarget.getBoundingClientRect();
         setCoinPop({ x: rect.left + rect.width / 2, y: rect.top, amount: reward });
@@ -95,12 +82,6 @@ export default function TasksScreen({
       updateRepeatingTask(confirm.task, confirm.updates, scope, today);
     }
     setConfirm(null);
-  };
-
-  const collectBonus = () => {
-    addCoins(5);
-    setBonusClaimedDate(today);
-    setShowBonus(false);
   };
 
   return (
@@ -154,28 +135,6 @@ export default function TasksScreen({
           </div>
         )}
       </section>
-
-      {showBonus && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
-          <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-revealBox">
-            <Star size={40} className="text-yellow-400 mx-auto mb-3" fill="currentColor" />
-            <h3 className="text-xl font-black text-emerald-400">All Done!</h3>
-            <p className="text-slate-300 text-sm mt-2">
-              You completed every task for today!
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-2 text-yellow-300 font-bold text-lg">
-              <span>🪙</span>
-              <span>+5 Bonus Coins!</span>
-            </div>
-            <button
-              onClick={collectBonus}
-              className="mt-5 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors"
-            >
-              Collect
-            </button>
-          </div>
-        </div>
-      )}
 
       {coinPop && (
         <div
