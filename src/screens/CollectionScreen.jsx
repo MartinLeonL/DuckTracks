@@ -105,14 +105,15 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
             >
               {rarity.charAt(0).toUpperCase() + rarity.slice(1)} ({ducks.length})
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="-mx-4 flex items-end gap-3 overflow-x-auto overflow-y-hidden bg-slate-950/35 px-6 pt-3">
               {ducks.map((duck) => (
-                <Podium
-                  key={duck.id}
-                  duck={duck}
-                  owned={ownedIds.includes(duck.id)}
-                  isTrophy={false}
-                />
+                <div key={duck.id} className="w-32 shrink-0 sm:w-36">
+                  <Podium
+                    duck={duck}
+                    owned={ownedIds.includes(duck.id)}
+                    isTrophy={false}
+                  />
+                </div>
               ))}
             </div>
           </section>
