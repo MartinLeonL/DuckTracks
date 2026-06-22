@@ -1,28 +1,55 @@
-import React, { useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import DuckSprite from "./DuckSprite";
-
-const SWIM_ANIMS = [
-  "animate-swim1",
-  "animate-swim2",
-  "animate-swim3",
-  "animate-swim4",
-  "animate-swim5",
-];
-
-const POSITIONS = [
-  { left: "15%", top: "38%" },
-  { left: "35%", top: "56%" },
-  { left: "55%", top: "32%" },
-  { left: "72%", top: "55%" },
-  { left: "82%", top: "36%" },
-];
 
 export default function DuckPond({ ownedDucks = [] }) {
   const pondDucks = useMemo(() => {
     if (ownedDucks.length === 0) return [];
     const shuffled = [...ownedDucks].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 5);
+    // show 5 ducks if screen is large enough, otherwise 3
+    const count = window.innerWidth >= 640 ? 5 : 3;
+    return shuffled.slice(0, count);
   }, [ownedDucks.length]); // eslint-disable-line
+
+  // Manage swimming state: coordinates and direction
+  const [duckStates, setDuckStates] = useState([]);
+
+  // Initialize random starting positions
+  useEffect(() => {
+    setDuckStates(
+      pondDucks.map((duck) => ({
+        id: duck.id,
+        duck,
+        x: Math.random() * 80 + 10, // Keep them away from the absolute edges
+        y: Math.random() * 60 + 20,
+        scaleX: 1, // 1 = facing right, -1 = facing left
+      }))
+    );
+  }, [pondDucks]);
+  
+  // Swim interval
+  useEffect(() => {
+    if (duckStates.length === 0) return;
+    const interval = setInterval(() => {
+      setDuckStates((prev) =>
+        prev.map((d) => {
+          // Give them a 30% chance to just chill instead of moving every tick
+          if (Math.random() > 0.7) return d;
+          
+          const newX = Math.random() * 80 + 10;
+          const newY = Math.random() * 60 + 20;
+          
+          return {
+            ...d,
+            x: newX,
+            y: newY,
+            scaleX: newX < d.x ? -1 : 1, // Flip to face left if moving left!
+          };
+        })
+      );
+    }, 8000); // Pick a new spot every 8 seconds
+
+    return () => clearInterval(interval);
+  }, [duckStates.length]);
 
   const isEmpty = pondDucks.length === 0;
 
@@ -59,56 +86,30 @@ export default function DuckPond({ ownedDucks = [] }) {
         }}
       />
 
-      {/* Moving light shimmer */}
-      <div
-        className="absolute inset-x-0 top-0 h-3 pointer-events-none overflow-hidden"
-        style={{ opacity: 0.35 }}
-      >
-        <div
-          className="absolute inset-y-0 w-1/2"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(186,230,253,0.6) 50%, transparent 100%)",
-            animation: "waterWave 4s linear infinite",
-          }}
-        />
-      </div>
-
-      <div
-        className="absolute inset-x-0 top-2 h-2 pointer-events-none overflow-hidden"
-        style={{ opacity: 0.2 }}
-      >
-        <div
-          className="absolute inset-y-0 w-1/3"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(186,230,253,0.8) 50%, transparent 100%)",
-            animation: "waterWave 6s linear infinite reverse",
-          }}
-        />
-      </div>
-
       {isEmpty ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
           <p className="text-cyan-200 text-sm font-medium">Your pond is empty!</p>
           <p className="text-cyan-500 text-xs mt-0.5">Roll the store to get your first ducky.</p>
         </div>
       ) : (
-        pondDucks.map((duck, idx) => (
+        duckStates.map((d) => (
           <div
-            key={duck.id}
-            className={`absolute ${SWIM_ANIMS[idx]}`}
+            key={d.id}
+            className="absolute transition-all duration-[8000ms] ease-in-out"
             style={{
-              ...POSITIONS[idx],
-              transform: "translateX(-50%)",
-              animationDelay: `${idx * 1.3}s`,
+              left: `${d.x}%`,
+              top: `${d.y}%`,
+              transform: "translate(-50%, -50%)",
+              zIndex: Math.round(d.y), // Ducks lower down appear in front
             }}
           >
-            <div
-              className="absolute rounded-full bg-black/20 blur-sm"
-              style={{ width: 36, height: 8, bottom: -4, left: "50%", transform: "translateX(-50%)" }}
-            />
-            <DuckSprite duck={duck} size={64} />
+            <div style={{ transform: `scaleX(${d.scaleX})`, transition: 'transform 0.4s ease-in-out' }}>
+              <div
+                className="absolute rounded-full bg-black/20 blur-sm"
+                style={{ width: 36, height: 8, bottom: -4, left: "50%", transform: "translateX(-50%)" }}
+              />
+              <DuckSprite duck={d.duck} size={64} />
+            </div>
           </div>
         ))
       )}

@@ -86,7 +86,12 @@ export default function CalendarScreen({
   const handleComplete = useCallback(
     (task) => {
       completeTask(task.id, selectedDate);
-      addCoins(1);
+      
+      let reward = 1;
+      if (task.size === 'medium') reward = 3;
+      if (task.size === 'large') reward = 5;
+      
+      addCoins(reward);
     },
     [completeTask, addCoins, selectedDate]
   );

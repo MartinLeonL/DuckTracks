@@ -1,11 +1,17 @@
 import React, { useState } from "react";
-import { Check, Clock, Calendar, Trash2, Pencil, ChevronDown, ChevronUp, AlignLeft } from "lucide-react";
+import { Check, Clock, Calendar, Trash2, Pencil, ChevronDown, ChevronUp, AlignLeft, Coins } from "lucide-react";
 import Timer from "./Timer";
 
 const TYPE_LABELS = {
   activity:   { label: "Activity",   color: "text-emerald-400", bg: "bg-emerald-900/30" },
   timed:      { label: "Timed",      color: "text-cyan-400",    bg: "bg-cyan-900/30"    },
   attendance: { label: "Attendance", color: "text-blue-400",    bg: "bg-blue-900/30"    },
+};
+
+const SIZE_REWARDS = {
+  small: 1,
+  medium: 3,
+  large: 5,
 };
 
 export default function TaskItem({
@@ -20,6 +26,7 @@ export default function TaskItem({
 }) {
   const [expanded, setExpanded] = useState(false);
   const meta = TYPE_LABELS[task.type] || TYPE_LABELS.activity;
+  const coinReward = SIZE_REWARDS[task.size] || 1;
   const hasDescription = task.description && task.description.trim().length > 0;
 
   const canComplete =
@@ -75,6 +82,7 @@ export default function TaskItem({
                 onClick={() => setExpanded((e) => !e)}
                 className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label={expanded ? "Collapse" : "Expand"}
+                aria-expanded={expanded}
               >
                 {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
@@ -85,6 +93,12 @@ export default function TaskItem({
             <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${meta.color} ${meta.bg}`}>
               {meta.label}
             </span>
+            
+            <span className="text-xs px-1.5 py-0.5 rounded-md font-medium text-amber-400 bg-amber-900/30 flex items-center gap-1">
+              <Coins size={10} />
+              {coinReward} Coin{coinReward !== 1 ? 's' : ''}
+            </span>
+
             {task.type === "timed" && (
               <span className="text-xs text-slate-400 flex items-center gap-1">
                 <Clock size={10} />

@@ -4,30 +4,22 @@ import Podium from "../components/Podium";
 
 const RARITIES = ["common", "rare", "epic", "legendary", "mythic"];
 
-const TROPHY_NAME_MAP = {
-  common:    "The Common Master Ducky",
-  rare:      "The Rare Master Ducky",
-  epic:      "The Epic Master Ducky",
-  legendary: "The Legendary Master Ducky",
-  mythic:    "The Mythic Master Ducky",
-};
-
 export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount }) {
   const [view, setView] = useState("owned");
 
   const trophyDucks = useMemo(
-    () => allDucks.filter((d) => Object.values(TROPHY_NAME_MAP).includes(d.name)),
+    () => allDucks.filter((d) => d.name?.toLowerCase().includes("master")),
     [allDucks]
   );
 
   const regularDucks = useMemo(
-    () => allDucks.filter((d) => !Object.values(TROPHY_NAME_MAP).includes(d.name)),
+    () => allDucks.filter((d) => !d.name?.toLowerCase().includes("master")),
     [allDucks]
   );
 
   const displayDucks = useMemo(() => {
     if (view === "owned") return regularDucks.filter((d) => ownedIds.includes(d.id));
-    return regularDucks;
+    return regularDucks; 
   }, [view, regularDucks, ownedIds]);
 
   const byRarity = useMemo(() => {
@@ -46,7 +38,7 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
             <Trophy size={12} /> Rarity Masters
           </h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {ownedTrophies.map((duck) => (
               <Podium
                 key={duck.id}
@@ -94,7 +86,7 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
             >
               {rarity.charAt(0).toUpperCase() + rarity.slice(1)} ({ducks.length})
             </h2>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {ducks.map((duck) => (
                 <Podium
                   key={duck.id}

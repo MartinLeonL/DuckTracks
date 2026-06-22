@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Clock, Calendar, Zap } from "lucide-react";
+import { X, Clock, Calendar, Zap, Coins } from "lucide-react";
 
 const DOW_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -7,6 +7,7 @@ const defaultForm = {
   title: "",
   description: "",
   type: "activity",
+  size: "small",
   date: "",
   durationMinutes: 30,
   startTime: "",
@@ -22,6 +23,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
         title: initialTask.title,
         description: initialTask.description || "",
         type: initialTask.type,
+        size: initialTask.size || "small",
         date: initialTask.date || "",
         durationMinutes: initialTask.durationSeconds
           ? Math.round(initialTask.durationSeconds / 60)
@@ -56,6 +58,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
       title: form.title.trim(),
       description: form.description.trim(),
       type: form.type,
+      size: form.size,
       date: form.repeating ? null : form.date,
       durationSeconds: form.type === "timed" ? form.durationMinutes * 60 : undefined,
       startTime: form.type === "attendance" ? form.startTime : undefined,
@@ -66,21 +69,22 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-md glass rounded-2xl shadow-2xl animate-slideUp">
         <div className="flex items-center justify-between p-4 border-b border-slate-700/60">
           <h3 className="text-base font-semibold text-slate-100">
             {initialTask ? "Edit Task" : "New Task"}
           </h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 transition-colors" aria-label="Close form">
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Task name</label>
+            <label htmlFor="task-title" className="block text-xs font-medium text-slate-400 mb-1">Task name</label>
             <input
+              id="task-title"
               type="text"
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
@@ -91,10 +95,11 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="task-desc" className="block text-xs font-medium text-slate-400 mb-1">
               Description <span className="text-slate-600">(optional)</span>
             </label>
             <textarea
+              id="task-desc"
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
               placeholder="Add notes or details..."
@@ -130,8 +135,9 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
 
           {form.type === "timed" && (
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Duration (minutes)</label>
+              <label htmlFor="task-duration" className="block text-xs font-medium text-slate-400 mb-1">Duration (minutes)</label>
               <input
+                id="task-duration"
                 type="number"
                 min={1}
                 max={480}
@@ -145,8 +151,9 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
           {form.type === "attendance" && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Start time</label>
+                <label htmlFor="task-start" className="block text-xs font-medium text-slate-400 mb-1">Start time</label>
                 <input
+                  id="task-start"
                   type="time"
                   value={form.startTime}
                   onChange={(e) => set("startTime", e.target.value)}
@@ -154,8 +161,9 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">End time <span className="text-slate-600">(optional)</span></label>
+                <label htmlFor="task-end" className="block text-xs font-medium text-slate-400 mb-1">End time <span className="text-slate-600">(optional)</span></label>
                 <input
+                  id="task-end"
                   type="time"
                   value={form.endTime}
                   onChange={(e) => set("endTime", e.target.value)}
@@ -193,8 +201,9 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
 
             {!form.repeating && (
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Date</label>
+                <label htmlFor="task-date" className="block text-xs font-medium text-slate-400 mb-1">Date</label>
                 <input
+                  id="task-date"
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
@@ -224,6 +233,33 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                 </div>
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5">Task size</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { value: "small",  label: "Small",  coins: 1 },
+                { value: "medium", label: "Medium", coins: 3 },
+                { value: "large",  label: "Large",  coins: 5 },
+              ].map(({ value, label, coins }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => set("size", value)}
+                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg border text-xs font-medium transition-all ${
+                    form.size === value
+                      ? "border-amber-500 bg-amber-900/40 text-amber-300"
+                      : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                  }`}
+                >
+                  <span className="font-semibold">{label}</span>
+                  <span className="text-[10px] flex items-center gap-1 opacity-90">
+                    <Coins size={10} /> {coins} Coin{coins > 1 ? 's' : ''}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <button

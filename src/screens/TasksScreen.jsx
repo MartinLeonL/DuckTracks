@@ -40,10 +40,17 @@ export default function TasksScreen({
   const handleComplete = useCallback(
     (task, e) => {
       completeTask(task.id, today);
-      addCoins(1);
+      
+      // Determine reward based on task size
+      let reward = 1;
+      if (task.size === 'medium') reward = 3;
+      if (task.size === 'large') reward = 5;
+      
+      addCoins(reward);
+      
       if (e?.currentTarget) {
         const rect = e.currentTarget.getBoundingClientRect();
-        setCoinPop({ x: rect.left + rect.width / 2, y: rect.top });
+        setCoinPop({ x: rect.left + rect.width / 2, y: rect.top, amount: reward });
         setTimeout(() => setCoinPop(null), 900);
       }
     },
@@ -175,7 +182,7 @@ export default function TasksScreen({
           className="fixed pointer-events-none z-50 animate-coinPop font-bold text-yellow-300 text-sm"
           style={{ left: coinPop.x, top: coinPop.y, transform: "translateX(-50%)" }}
         >
-          +1 🪙
+          +{coinPop.amount} 🪙
         </div>
       )}
 

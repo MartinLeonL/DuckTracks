@@ -5,6 +5,7 @@ import { fetchAllDucks } from "./supabaseClient";
 import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage";
 
 import CoinDisplay from "./components/CoinDisplay";
+import ClockDisplay from "./components/ClockDisplay"; // <-- NEW
 import TasksScreen from "./screens/TasksScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import CollectionScreen from "./screens/CollectionScreen";
@@ -69,6 +70,15 @@ export default function App() {
     if (lastOpenedDate === today) return;
     if (lastOpenedDate && lastOpenedDate < today) {
       const yesterday = yesterdayYMD();
+      
+      // --- NEW MIDNIGHT BONUS LOGIC ---
+      const yesterdaysTasks = getTasksForDate(yesterday);
+      if (yesterdaysTasks.length > 0 && yesterdaysTasks.every(t => t.completed)) {
+        addCoins(5);
+        alert("Awesome job! You earned 5 bonus coins for completing all your tasks yesterday!");
+      }
+      // --------------------------------
+
       const penaltyDay = lastOpenedDate >= yesterday ? lastOpenedDate : yesterday;
       const penaltyCount = processDayReset(penaltyDay);
       if (penaltyCount > 0) addCoins(-penaltyCount);
@@ -83,7 +93,10 @@ export default function App() {
     <div className="flex flex-col h-full max-w-2xl mx-auto bg-slate-900 relative">
       <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800 glass z-10">
         <h1 className="text-base font-black text-emerald-400 tracking-tight">DuckTracks</h1>
-        <CoinDisplay coins={coins} />
+        <div className="flex items-center">
+          <ClockDisplay /> 
+          <CoinDisplay coins={coins} />
+        </div>
       </header>
 
       {ducksError && (
