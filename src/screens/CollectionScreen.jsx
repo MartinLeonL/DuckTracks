@@ -4,22 +4,31 @@ import Podium from "../components/Podium";
 
 const RARITIES = ["common", "rare", "epic", "legendary", "mythic"];
 
+// Must match DB names exactly (same constant as StoreScreen)
+const TROPHY_NAMES = new Set([
+  "The Common Master Duck",
+  "The Rare Master Duck",
+  "The Epic Master Duck",
+  "The Legendary Master Duck",
+  "The Mythic Master Duck",
+]);
+
 export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount }) {
   const [view, setView] = useState("owned");
 
   const trophyDucks = useMemo(
-    () => allDucks.filter((d) => d.name?.toLowerCase().includes("master")),
+    () => allDucks.filter((d) => TROPHY_NAMES.has(d.name)),
     [allDucks]
   );
 
   const regularDucks = useMemo(
-    () => allDucks.filter((d) => !d.name?.toLowerCase().includes("master")),
+    () => allDucks.filter((d) => !TROPHY_NAMES.has(d.name)),
     [allDucks]
   );
 
   const displayDucks = useMemo(() => {
     if (view === "owned") return regularDucks.filter((d) => ownedIds.includes(d.id));
-    return regularDucks; 
+    return regularDucks;
   }, [view, regularDucks, ownedIds]);
 
   const byRarity = useMemo(() => {
@@ -29,29 +38,38 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
     }, {});
   }, [displayDucks]);
 
-  const ownedTrophies = trophyDucks.filter((d) => getTrophyCount(d.id) > 0);
+  // Only show trophy ducks the user has actually earned (trophyCount > 0)
+  const earnedTrophies = trophyDucks.filter((d) => getTrophyCount(d.id) > 0);
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 pb-24 space-y-5">
-      {ownedTrophies.length > 0 && (
+      {/* Rarity Masters section — only visible once at least one trophy is earned */}
+      {earnedTrophies.length > 0 && (
         <section>
           <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Trophy size={12} /> Rarity Masters
+            <Trophy size={12} className="text-yellow-400" />
+            <span className="text-yellow-400">Rarity Masters</span>
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {ownedTrophies.map((duck) => (
-              <Podium
-                key={duck.id}
-                duck={duck}
-                owned={true}
-                isTrophy={true}
-                trophyCount={getTrophyCount(duck.id)}
-              />
-            ))}
+          <div className="glass rounded-xl p-3">
+            <p className="text-xs text-slate-500 mb-3">
+              Awarded for collecting every duck of a rarity.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {earnedTrophies.map((duck) => (
+                <Podium
+                  key={duck.id}
+                  duck={duck}
+                  owned={true}
+                  isTrophy={true}
+                  trophyCount={getTrophyCount(duck.id)}
+                />
+              ))}
+            </div>
           </div>
         </section>
       )}
 
+      {/* View toggle */}
       <div className="flex gap-2">
         <button
           onClick={() => setView("owned")}
@@ -75,6 +93,7 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
         </button>
       </div>
 
+      {/* Ducks by rarity */}
       {RARITIES.map((rarity) => {
         const ducks = byRarity[rarity];
         if (ducks.length === 0) return null;

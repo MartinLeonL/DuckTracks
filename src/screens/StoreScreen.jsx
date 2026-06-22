@@ -4,7 +4,6 @@ import GachaReveal from "../components/GachaReveal";
 
 const ROLL_COST = 1;
 
-// Order for the roll logic (highest→lowest, doesn't affect display)
 const RARITY_RATES_ROLL = [
   { rarity: "mythic",    chance: 0.02 },
   { rarity: "legendary", chance: 0.08 },
@@ -13,7 +12,6 @@ const RARITY_RATES_ROLL = [
   { rarity: "common",    chance: 0.45 },
 ];
 
-// Display order: common at top → mythic at bottom
 const RARITY_RATES_DISPLAY = [
   { rarity: "common",    chance: 0.45 },
   { rarity: "rare",      chance: 0.30 },
@@ -22,13 +20,16 @@ const RARITY_RATES_DISPLAY = [
   { rarity: "mythic",    chance: 0.02 },
 ];
 
+// Must match the `name` values seeded in the DB exactly
 const TROPHY_NAME_MAP = {
-  common:    "The Common Master Ducky",
-  rare:      "The Rare Master Ducky",
-  epic:      "The Epic Master Ducky",
-  legendary: "The Legendary Master Ducky",
-  mythic:    "The Mythic Master Ducky",
+  common:    "The Common Master Duck",
+  rare:      "The Rare Master Duck",
+  epic:      "The Epic Master Duck",
+  legendary: "The Legendary Master Duck",
+  mythic:    "The Mythic Master Duck",
 };
+
+const TROPHY_NAMES = new Set(Object.values(TROPHY_NAME_MAP));
 
 function rollRarity() {
   const r = Math.random();
@@ -54,12 +55,8 @@ export default function StoreScreen({
 
   const canRoll = coins >= ROLL_COST;
 
-  const trophyDucks = allDucks.filter((d) =>
-    Object.values(TROPHY_NAME_MAP).includes(d.name)
-  );
-  const regularDucks = allDucks.filter(
-    (d) => !Object.values(TROPHY_NAME_MAP).includes(d.name)
-  );
+  const trophyDucks = allDucks.filter((d) => TROPHY_NAMES.has(d.name));
+  const regularDucks = allDucks.filter((d) => !TROPHY_NAMES.has(d.name));
 
   const handleRoll = useCallback(() => {
     if (!canRoll || isRolling) return;
@@ -70,11 +67,13 @@ export default function StoreScreen({
     const unowned = rarityPool.filter((d) => !ownedIds.includes(d.id));
 
     if (unowned.length > 0) {
+      // Still regular ducks to collect — give one of those
       const duck = unowned[Math.floor(Math.random() * unowned.length)];
       spendCoins(ROLL_COST);
       addDuck(duck.id);
       setReveal({ duck, isTrophy: false, trophyCount: 0 });
-    } else {
+    } else if (rarityPool.length > 0) {
+      // All regular ducks of this rarity are owned — award trophy duck
       const trophyDuck = trophyDucks.find((d) => d.name === TROPHY_NAME_MAP[rarity]);
       if (trophyDuck) {
         spendCoins(ROLL_COST);
@@ -82,8 +81,12 @@ export default function StoreScreen({
         incrementTrophy(trophyDuck.id);
         setReveal({ duck: trophyDuck, isTrophy: true, trophyCount: newCount });
       } else {
-        console.warn("No trophy ducky found for rarity:", rarity);
+        // Trophy duck not found in DB — just don't charge and warn
+        console.warn("No trophy duck found for rarity:", rarity);
       }
+    } else {
+      // No ducks of this rarity exist in DB at all — shouldn't happen
+      console.warn("No ducks found for rarity:", rarity);
     }
 
     setIsRolling(false);
@@ -119,16 +122,16 @@ export default function StoreScreen({
           }`}
         >
           <Shuffle size={22} />
-          Roll Ducky — 50 🪙
+          Roll Ducky — {ROLL_COST} 🪙
         </button>
         {!canRoll && (
           <p className="text-xs text-slate-500">
-            Need {ROLL_COST - coins} more coins to roll.
+            Need {ROLL_COST - coins} more coin{ROLL_COST - coins !== 1 ? "s" : ""} to roll.
           </p>
         )}
       </div>
 
-      {/* Drop rates — common at top, mythic at bottom */}
+      {/* Drop rates */}
       <section>
         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
           Drop Rates
@@ -145,9 +148,17 @@ export default function StoreScreen({
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg rarity-${rarity}`}
                 style={{ background: "var(--rarity-bg)" }}
               >
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "var(--rarity-color)" }} />
-                <span className="flex-1 text-sm font-medium text-slate-200 capitalize">{rarity}</span>
-                <span className="text-xs font-semibold" style={{ color: "var(--rarity-color)" }}>
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: "var(--rarity-color)" }}
+                />
+                <span className="flex-1 text-sm font-medium text-slate-200 capitalize">
+                  {rarity}
+                </span>
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: "var(--rarity-color)" }}
+                >
                   {(chance * 100).toFixed(0)}%
                 </span>
                 {complete ? (
@@ -163,13 +174,18 @@ export default function StoreScreen({
             );
           })}
         </div>
+        <p className="text-xs text-slate-600 mt-2 text-center">
+          Complete a rarity to unlock its Master Duck trophy!
+        </p>
       </section>
 
       {/* Collection progress */}
       <section className="glass rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-slate-300">Collection Progress</h3>
-          <span className="text-sm font-bold text-emerald-400">{ownedRegular}/{totalRegular}</span>
+          <span className="text-sm font-bold text-emerald-400">
+            {ownedRegular}/{totalRegular}
+          </span>
         </div>
         <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
           <div
