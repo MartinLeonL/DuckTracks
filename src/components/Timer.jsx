@@ -4,7 +4,7 @@
  * Calls onComplete when the timer hits 0.
  */
 import React, { useState, useEffect, useCallback } from "react";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { CheckCircle, Play, Pause, RotateCcw } from "lucide-react";
 
 function formatTime(seconds) {
   const h = Math.floor(seconds / 3600);
@@ -68,7 +68,14 @@ export default function Timer({
             isFinished ? "text-emerald-400" : remaining < 60 ? "text-red-400" : "text-cyan-300"
           }`}
         >
-          {isFinished ? "✓ Done" : formatTime(remaining)}
+          {isFinished ? (
+            <span className="inline-flex items-center gap-1">
+              <CheckCircle size={14} />
+              Done
+            </span>
+          ) : (
+            formatTime(remaining)
+          )}
         </span>
         <span className="text-slate-500 text-xs">/ {formatTime(totalSeconds)}</span>
 

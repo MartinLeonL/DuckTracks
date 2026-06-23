@@ -60,7 +60,7 @@ export default function GachaReveal({ duck, isTrophy, trophyCount, onClose }) {
               )}
               {isTrophy && trophyCount > 1 && (
                 <p className="text-yellow-300 text-sm mt-2">
-                  Trophy ×{trophyCount} — Keep collecting!
+                  Trophy ×{trophyCount} - Keep collecting!
                 </p>
               )}
             </div>

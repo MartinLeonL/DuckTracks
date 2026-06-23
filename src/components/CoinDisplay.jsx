@@ -3,6 +3,7 @@
  * Shows the user's current coin balance with a gold coin icon.
  */
 import React from "react";
+import { Coins } from "lucide-react";
 
 export default function CoinDisplay({ coins }) {
   const isNegative = coins < 0;
@@ -12,7 +13,7 @@ export default function CoinDisplay({ coins }) {
         ? "border-red-700 bg-red-900/30 text-red-300"
         : "border-yellow-700/60 bg-yellow-900/20 text-yellow-300"
     }`}>
-      <span className="text-base">🪙</span>
+      <Coins size={16} />
       <span className="text-sm font-bold tabular-nums">{coins}</span>
     </div>
   );

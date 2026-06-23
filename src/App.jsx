@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { CheckSquare, Calendar, Package, ShoppingBag } from "lucide-react";
+import { Bird, CheckSquare, Calendar, Package, PartyPopper, ShoppingBag } from "lucide-react";
 
 import { fetchAllDucks } from "./supabaseClient";
 import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage";
@@ -167,8 +167,8 @@ export default function App() {
         {ducksLoading && screen !== "tasks" && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 z-20">
             <div className="text-center">
-              <div className="animate-bob text-3xl mb-2">🦆</div>
-              <p className="text-sm text-slate-400">Loading duckies…</p>
+              <Bird size={32} className="animate-bob mx-auto mb-2 text-emerald-400" />
+              <p className="text-sm text-slate-400">Loading duckies...</p>
             </div>
           </div>
         )}
@@ -196,7 +196,7 @@ export default function App() {
       {startupMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-slideUp">
-            <div className="text-4xl mb-3">🎉</div>
+            <PartyPopper size={40} className="mx-auto mb-3 text-yellow-300" />
             <h3 className="text-lg font-black text-emerald-400">Great work!</h3>
             <p className="text-slate-300 text-sm mt-2">{startupMessage.text}</p>
             <p className="text-yellow-300 font-bold mt-3">{startupMessage.subtext}</p>

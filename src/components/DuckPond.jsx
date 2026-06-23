@@ -101,7 +101,7 @@ export default function DuckPond({ ownedDucks = [] }) {
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden border border-cyan-900/60"
+      className="relative isolate w-full rounded-2xl overflow-hidden border border-cyan-900/60"
       style={{ height: 150 }}
     >
       {/* Deep pond water */}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Clock, Calendar, Zap, Coins } from "lucide-react";
+import { X, Clock, Calendar, Zap, Coins, Repeat2 } from "lucide-react";
 
 const DOW_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -195,7 +195,10 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                     : "border-slate-700 bg-slate-800 text-slate-400"
                 }`}
               >
-                ↻ Repeating
+                <span className="inline-flex items-center justify-center gap-1">
+                  <Repeat2 size={12} />
+                  Repeating
+                </span>
               </button>
             </div>
 

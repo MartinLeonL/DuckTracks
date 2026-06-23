@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Shuffle, Trophy } from "lucide-react";
+import { Coins, Shuffle, Trophy } from "lucide-react";
 import GachaReveal from "../components/GachaReveal";
 
 const ROLL_COST = 1;
@@ -105,7 +105,7 @@ export default function StoreScreen({
           Roll for a chance to collect a rare rubber ducky!
         </p>
         <div className="mt-3 flex items-center justify-center gap-1.5 text-yellow-300 font-semibold">
-          <span>🪙</span>
+          <Coins size={16} />
           <span>{coins} coins</span>
         </div>
       </div>
@@ -122,7 +122,11 @@ export default function StoreScreen({
           }`}
         >
           <Shuffle size={22} />
-          Roll Ducky — {ROLL_COST} 🪙
+          <span>Roll Ducky</span>
+          <span className="inline-flex items-center gap-1">
+            {ROLL_COST}
+            <Coins size={18} />
+          </span>
         </button>
         {!canRoll && (
           <p className="text-xs text-slate-500">

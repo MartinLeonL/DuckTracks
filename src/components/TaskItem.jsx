@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Clock, Calendar, Trash2, Pencil, ChevronDown, ChevronUp, AlignLeft, Coins } from "lucide-react";
+import { Check, Clock, Calendar, Trash2, Pencil, ChevronDown, ChevronUp, AlignLeft, Coins, Repeat2 } from "lucide-react";
 import Timer from "./Timer";
 
 const TYPE_LABELS = {
@@ -115,7 +115,10 @@ export default function TaskItem({
               <span className="text-xs text-slate-500">{task.date}</span>
             )}
             {task.repeating && (
-              <span className="text-xs text-purple-400">↻ Repeating</span>
+              <span className="text-xs text-purple-400 flex items-center gap-1">
+                <Repeat2 size={10} />
+                Repeating
+              </span>
             )}
             {hasDescription && !expanded && (
               <span className="text-xs text-slate-600 flex items-center gap-0.5">

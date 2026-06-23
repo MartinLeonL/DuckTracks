@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Coins, Plus } from "lucide-react";
 import DuckPond from "../components/DuckPond";
 import TaskItem from "../components/TaskItem";
 import TaskForm from "../components/TaskForm";
@@ -141,7 +141,10 @@ export default function TasksScreen({
           className="fixed pointer-events-none z-50 animate-coinPop font-bold text-yellow-300 text-sm"
           style={{ left: coinPop.x, top: coinPop.y, transform: "translateX(-50%)" }}
         >
-          +{coinPop.amount} 🪙
+          <span className="inline-flex items-center gap-1">
+            +{coinPop.amount}
+            <Coins size={14} />
+          </span>
         </div>
       )}
 
