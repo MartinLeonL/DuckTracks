@@ -3,14 +3,17 @@ import { Trophy } from "lucide-react";
 import Podium from "../components/Podium";
 
 const RARITIES = ["common", "rare", "epic", "legendary", "mythic"];
+const RARITY_RANK = Object.fromEntries(
+  RARITIES.map((rarity, index) => [rarity, index])
+);
 
 // Must match DB names exactly (same constant as StoreScreen)
 const TROPHY_NAMES = new Set([
-  "The Common Master Duck",
-  "The Rare Master Duck",
-  "The Epic Master Duck",
-  "The Legendary Master Duck",
-  "The Mythic Master Duck",
+  "Common Mastery Duck",
+  "Rare Mastery Duck",
+  "Epic Mastery Duck",
+  "Legendary Mastery Duck",
+  "Mythic Mastery Duck",
 ]);
 
 export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount }) {
@@ -39,7 +42,13 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
   }, [displayDucks]);
 
   // Only show trophy ducks the user has actually earned (trophyCount > 0)
-  const earnedTrophies = trophyDucks.filter((d) => getTrophyCount(d.id) > 0);
+  const earnedTrophies = trophyDucks
+    .filter((d) => getTrophyCount(d.id) > 0)
+    .sort(
+      (a, b) =>
+        (RARITY_RANK[a.rarity] ?? RARITIES.length) -
+        (RARITY_RANK[b.rarity] ?? RARITIES.length)
+    );
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-3 pb-24 space-y-5">
@@ -50,21 +59,20 @@ export default function CollectionScreen({ allDucks, ownedIds, getTrophyCount })
             <Trophy size={12} className="text-yellow-400" />
             <span className="text-yellow-400">Rarity Masters</span>
           </h2>
-          <div className="glass rounded-xl p-3">
-            <p className="text-xs text-slate-500 mb-3">
-              Awarded for collecting every duck of a rarity.
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {earnedTrophies.map((duck) => (
+          <p className="text-xs text-slate-500 mb-3">
+            Awarded for collecting every duck of a rarity.
+          </p>
+          <div className="-mx-4 flex items-end gap-3 overflow-x-auto overflow-y-hidden bg-slate-950/35 px-6 pt-3">
+            {earnedTrophies.map((duck) => (
+              <div key={duck.id} className="w-44 shrink-0 sm:w-48">
                 <Podium
-                  key={duck.id}
                   duck={duck}
                   owned={true}
                   isTrophy={true}
                   trophyCount={getTrophyCount(duck.id)}
                 />
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </section>
       )}
