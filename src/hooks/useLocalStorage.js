@@ -36,6 +36,12 @@ export function useCoins() {
 
 const TASKS_KEY = "dt_tasks";
 
+const TASK_SIZE_REWARDS = {
+  small: 1,
+  medium: 3,
+  large: 5,
+};
+
 export function useTasks() {
   const [tasks, setTasks] = useLocalStorage(TASKS_KEY, []);
 
@@ -162,7 +168,10 @@ export function useTasks() {
     (yesterdayStr) => {
       const yesterdayTasks = getTasksForDate(yesterdayStr);
       const incomplete = yesterdayTasks.filter((t) => !t.completed);
-      return incomplete.length;
+      return incomplete.reduce(
+        (total, task) => total + (TASK_SIZE_REWARDS[task.size] || TASK_SIZE_REWARDS.small),
+        0
+      );
     },
     [getTasksForDate]
   );

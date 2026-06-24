@@ -22,11 +22,11 @@ const RARITY_RATES_DISPLAY = [
 
 // Must match the `name` values seeded in the DB exactly
 const TROPHY_NAME_MAP = {
-  common:    "The Common Master Duck",
-  rare:      "The Rare Master Duck",
-  epic:      "The Epic Master Duck",
-  legendary: "The Legendary Master Duck",
-  mythic:    "The Mythic Master Duck",
+  common:    "Common Mastery Duck",
+  rare:      "Rare Mastery Duck",
+  epic:      "Epic Mastery Duck",
+  legendary: "Legendary Mastery Duck",
+  mythic:    "Mythic Mastery Duck",
 };
 
 const TROPHY_NAMES = new Set(Object.values(TROPHY_NAME_MAP));
@@ -179,7 +179,7 @@ export default function StoreScreen({
           })}
         </div>
         <p className="text-xs text-slate-600 mt-2 text-center">
-          Complete a rarity to unlock its Master Duck trophy!
+          Complete a rarity to unlock its Mastery Duck trophy!
         </p>
       </section>
 

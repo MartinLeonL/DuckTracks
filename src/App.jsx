@@ -90,10 +90,10 @@ export default function App() {
         });
       }
 
-      // Penalise incomplete tasks from the previous day
+      // Penalise incomplete tasks by their coin value from the previous day
       const penaltyDay = lastOpenedDate >= yesterday ? lastOpenedDate : yesterday;
-      const penaltyCount = processDayReset(penaltyDay);
-      if (penaltyCount > 0) addCoins(-penaltyCount);
+      const penaltyAmount = processDayReset(penaltyDay);
+      if (penaltyAmount > 0) addCoins(-penaltyAmount);
     }
 
     setLastOpenedDate(today);
