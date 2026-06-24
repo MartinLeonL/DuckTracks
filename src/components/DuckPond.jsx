@@ -10,6 +10,14 @@ const WOBBLE_DEG = 7;
 // Wobble period in ms
 const WOBBLE_PERIOD = 2200;
 
+const MASTERY_GLOWS = {
+  common: "rgba(34, 197, 94, 0.45)",
+  rare: "rgba(59, 130, 246, 0.45)",
+  epic: "rgba(168, 85, 247, 0.45)",
+  legendary: "rgba(234, 179, 8, 0.48)",
+  mythic: "rgba(239, 68, 68, 0.5)",
+};
+
 function randomWaypoint() {
   return {
     x: Math.random() * 76 + 12,
@@ -152,6 +160,8 @@ export default function DuckPond({ ownedDucks = [] }) {
           const tilt = moving ? tiltDeg * 0.5 : tiltDeg * 0.15;
 
           const flipX = d.facingLeft ? -1 : 1;
+          const isMasteryDuck = d.duck.name.endsWith("Mastery Duck");
+          const masteryGlow = MASTERY_GLOWS[d.duck.rarity] || MASTERY_GLOWS.common;
 
           return (
             <div
@@ -178,12 +188,22 @@ export default function DuckPond({ ownedDucks = [] }) {
               />
               {/* Duck sprite with flip + tilt */}
               <div
+                className="relative"
                 style={{
                   transform: `scaleX(${flipX}) rotate(${tilt * flipX}deg)`,
                   transformOrigin: "center bottom",
                   transition: "transform 0.3s ease-out",
                 }}
               >
+                {isMasteryDuck && (
+                  <div
+                    className="absolute inset-0 rounded-full blur-md"
+                    style={{
+                      background: `radial-gradient(circle, ${masteryGlow} 0%, transparent 68%)`,
+                      transform: "scale(1.25)",
+                    }}
+                  />
+                )}
                 <DuckSprite duck={d.duck} size={64} />
               </div>
             </div>

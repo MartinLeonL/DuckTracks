@@ -101,6 +101,13 @@ export default function App() {
 
   const today = todayYMD();
   const todayTasks = useMemo(() => getTasksForDate(today), [tasks, today]); // eslint-disable-line
+  const pondDuckIds = useMemo(() => {
+    const earnedMasteryIds = Object.entries(inventory.trophyCounts || {})
+      .filter(([, count]) => count > 0)
+      .map(([duckId]) => duckId);
+
+    return Array.from(new Set([...inventory.owned, ...earnedMasteryIds]));
+  }, [inventory.owned, inventory.trophyCounts]);
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto bg-slate-900 relative">
@@ -123,7 +130,7 @@ export default function App() {
           <TasksScreen
             todayTasks={todayTasks}
             allDucks={allDucks}
-            ownedDuckIds={inventory.owned}
+            ownedDuckIds={pondDuckIds}
             addTask={addTask}
             updateTask={updateTask}
             updateRepeatingTask={updateRepeatingTask}
