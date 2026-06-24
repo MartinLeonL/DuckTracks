@@ -30,18 +30,16 @@ export function useAuth() {
   }
 
   const signUp = useCallback(async ({ email, password, username, name }) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    // Pass username + name as metadata — the DB trigger picks these up
+    // and inserts the profiles row server-side (avoids RLS timing issues).
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username, name },
+      },
+    });
     if (error) throw error;
-
-    if (data.user) {
-      const { error: profileError } = await supabase.from("profiles").insert({
-        user_id: data.user.id,
-        username,
-        name,
-        email, // store email so we can look up by username later
-      });
-      if (profileError) throw profileError;
-    }
     return data;
   }, []);
 
