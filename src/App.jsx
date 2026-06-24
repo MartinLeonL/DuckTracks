@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Bird, CheckSquare, Calendar, Coins, Package, PartyPopper, ShoppingBag } from "lucide-react";
+import { Bird, CheckSquare, Calendar, Coins, Package, PartyPopper, ShoppingBag, UserCircle } from "lucide-react";
 
 import { fetchAllDucks } from "./supabaseClient";
 import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage";
+import { useAuth } from "./hooks/useAuth";
+import { useCloudSync } from "./hooks/useCloudSync";
 
 import CoinDisplay from "./components/CoinDisplay";
 import ClockDisplay from "./components/ClockDisplay";
@@ -10,12 +12,15 @@ import TasksScreen from "./screens/TasksScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import CollectionScreen from "./screens/CollectionScreen";
 import StoreScreen from "./screens/StoreScreen";
+import AccountScreen from "./screens/AccountScreen";
+import AuthScreen from "./screens/AuthScreen";
 
 const NAV_ITEMS = [
   { id: "tasks",      label: "Tasks",      Icon: CheckSquare },
   { id: "calendar",   label: "Calendar",   Icon: Calendar    },
   { id: "collection", label: "Collection", Icon: Package     },
   { id: "store",      label: "Store",      Icon: ShoppingBag },
+  { id: "account",    label: "Account",    Icon: UserCircle  },
 ];
 
 function toLocalYMD(date) {
@@ -35,14 +40,26 @@ function yesterdayYMD() {
   return toLocalYMD(d);
 }
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-3">
+      <Bird size={40} className="text-emerald-400 animate-bob" />
+      <p className="text-slate-400 text-sm">Loading DuckTracks…</p>
+    </div>
+  );
+}
+
 export default function App() {
+  const { session, profile, user, loading: authLoading, signIn, signUp, signOut, updatePassword, updateUsername, updateName } = useAuth();
+  const userId = user?.id ?? null;
+
   const [screen, setScreen] = useState("tasks");
   const [allDucks, setAllDucks] = useState([]);
   const [ducksLoading, setDucksLoading] = useState(true);
   const [ducksError, setDucksError] = useState(null);
   const [startupMessage, setStartupMessage] = useState(null);
 
-  const { coins, addCoins, spendCoins } = useCoins();
+  const { coins, addCoins, spendCoins, resetCoins } = useCoins(userId);
   const {
     tasks,
     addTask,
@@ -52,11 +69,16 @@ export default function App() {
     completeTask,
     getTasksForDate,
     processDayReset,
-  } = useTasks();
-  const { inventory, addDuck, incrementTrophy, getTrophyCount } = useDuckInventory();
-  const [lastOpenedDate, setLastOpenedDate] = useLastOpenedDate();
+    resetTasks,
+  } = useTasks(userId);
+  const { inventory, addDuck, incrementTrophy, getTrophyCount, resetInventory } = useDuckInventory(userId);
+  const [lastOpenedDate, setLastOpenedDate] = useLastOpenedDate(userId);
 
+  const { syncToCloud, loadFromCloud, clearCloudData } = useCloudSync(userId);
+
+  // Load ducks when authenticated
   useEffect(() => {
+    if (!session) return;
     let cancelled = false;
     setDucksLoading(true);
     fetchAllDucks()
@@ -71,23 +93,23 @@ export default function App() {
         }
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [session]);
 
+  // Day-change startup check
   useEffect(() => {
+    if (!userId) return;
     const today = todayYMD();
     if (lastOpenedDate === today) return;
 
     if (lastOpenedDate && lastOpenedDate < today) {
       const yesterday = yesterdayYMD();
 
-      // Check if all of yesterday's tasks were completed — award bonus if so
       const yesterdaysTasks = getTasksForDate(yesterday);
       const earnedBonus =
         yesterdaysTasks.length > 0 && yesterdaysTasks.every((t) => t.completed);
 
       if (earnedBonus) addCoins(5);
 
-      // Penalise incomplete tasks by their coin value from the previous day
       const penaltyDay = lastOpenedDate >= yesterday ? lastOpenedDate : yesterday;
       const penaltyAmount = processDayReset(penaltyDay);
       if (penaltyAmount > 0) addCoins(-penaltyAmount);
@@ -110,7 +132,7 @@ export default function App() {
     }
 
     setLastOpenedDate(today);
-  }, []); // eslint-disable-line
+  }, [userId]); // eslint-disable-line
 
   const today = todayYMD();
   const todayTasks = useMemo(() => getTasksForDate(today), [tasks, today]); // eslint-disable-line
@@ -118,9 +140,23 @@ export default function App() {
     const earnedMasteryIds = Object.entries(inventory.trophyCounts || {})
       .filter(([, count]) => count > 0)
       .map(([duckId]) => duckId);
-
     return Array.from(new Set([...inventory.owned, ...earnedMasteryIds]));
   }, [inventory.owned, inventory.trophyCounts]);
+
+  const handleResetData = async () => {
+    resetCoins();
+    resetTasks();
+    resetInventory();
+    await clearCloudData();
+  };
+
+  // Show loading while auth state initialises
+  if (authLoading) return <LoadingScreen />;
+
+  // Show auth screen if not logged in
+  if (!session) {
+    return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
+  }
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto bg-slate-900 relative">
@@ -183,12 +219,25 @@ export default function App() {
             getTrophyCount={getTrophyCount}
           />
         )}
+        {screen === "account" && (
+          <AccountScreen
+            user={user}
+            profile={profile}
+            coins={coins}
+            ownedDuckCount={inventory.owned.length}
+            onSignOut={signOut}
+            onUpdateUsername={updateUsername}
+            onUpdateName={updateName}
+            onUpdatePassword={updatePassword}
+            onResetData={handleResetData}
+          />
+        )}
 
-        {ducksLoading && screen !== "tasks" && (
+        {ducksLoading && screen !== "tasks" && screen !== "account" && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 z-20">
             <div className="text-center">
               <Bird size={32} className="animate-bob mx-auto mb-2 text-emerald-400" />
-              <p className="text-sm text-slate-400">Loading duckies...</p>
+              <p className="text-sm text-slate-400">Loading duckies…</p>
             </div>
           </div>
         )}
@@ -212,7 +261,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Startup notification — shown once per new day if bonus was earned */}
       {startupMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-slideUp">

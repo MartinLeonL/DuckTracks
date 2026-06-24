@@ -1,37 +1,56 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-export function useLocalStorage(key, initialValue) {
+// Prefix keys with userId to support multiple users on same device
+function makeKey(key, userId) {
+  return userId ? `${key}_${userId}` : key;
+}
+
+export function useLocalStorage(key, initialValue, userId) {
+  const scopedKey = makeKey(key, userId);
+
   const [storedValue, setStoredValue] = useState(() => {
     try {
-      const item = window.localStorage.getItem(key);
+      const item = window.localStorage.getItem(scopedKey);
       return item !== null ? JSON.parse(item) : initialValue;
     } catch {
       return initialValue;
     }
   });
 
+  // Re-read from storage when userId or key changes (e.g. after login)
+  useEffect(() => {
+    try {
+      const item = window.localStorage.getItem(scopedKey);
+      setStoredValue(item !== null ? JSON.parse(item) : initialValue);
+    } catch {
+      setStoredValue(initialValue);
+    }
+  }, [scopedKey]); // eslint-disable-line
+
   const setValue = useCallback(
     (value) => {
       try {
+        const sk = makeKey(key, userId);
         const valueToStore =
           typeof value === "function" ? value(storedValue) : value;
         setStoredValue(valueToStore);
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        window.localStorage.setItem(sk, JSON.stringify(valueToStore));
       } catch (err) {
         console.error("useLocalStorage write error:", err);
       }
     },
-    [key, storedValue]
+    [key, userId, storedValue]
   );
 
   return [storedValue, setValue];
 }
 
-export function useCoins() {
-  const [coins, setCoins] = useLocalStorage("dt_coins", 0);
+export function useCoins(userId) {
+  const [coins, setCoins] = useLocalStorage("dt_coins", 0, userId);
   const addCoins = useCallback((amount) => setCoins((c) => c + amount), [setCoins]);
   const spendCoins = useCallback((amount) => setCoins((c) => c - amount), [setCoins]);
-  return { coins, setCoins, addCoins, spendCoins };
+  const resetCoins = useCallback(() => setCoins(0), [setCoins]);
+  return { coins, setCoins, addCoins, spendCoins, resetCoins };
 }
 
 const TASKS_KEY = "dt_tasks";
@@ -42,8 +61,8 @@ const TASK_SIZE_REWARDS = {
   large: 5,
 };
 
-export function useTasks() {
-  const [tasks, setTasks] = useLocalStorage(TASKS_KEY, []);
+export function useTasks(userId) {
+  const [tasks, setTasks] = useLocalStorage(TASKS_KEY, [], userId);
 
   const uuid = () =>
     "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -176,6 +195,8 @@ export function useTasks() {
     [getTasksForDate]
   );
 
+  const resetTasks = useCallback(() => setTasks([]), [setTasks]);
+
   return {
     tasks,
     addTask,
@@ -186,14 +207,15 @@ export function useTasks() {
     getTasksForDate,
     processDayReset,
     setTasks,
+    resetTasks,
   };
 }
 
-export function useDuckInventory() {
+export function useDuckInventory(userId) {
   const [inventory, setInventory] = useLocalStorage("dt_inventory", {
     owned: [],
     trophyCounts: {},
-  });
+  }, userId);
 
   const addDuck = useCallback(
     (duckId) => {
@@ -225,13 +247,18 @@ export function useDuckInventory() {
     [inventory.trophyCounts]
   );
 
-  return { inventory, addDuck, incrementTrophy, ownsDuck, getTrophyCount };
+  const resetInventory = useCallback(
+    () => setInventory({ owned: [], trophyCounts: {} }),
+    [setInventory]
+  );
+
+  return { inventory, addDuck, incrementTrophy, ownsDuck, getTrophyCount, resetInventory };
 }
 
-export function useLastOpenedDate() {
-  return useLocalStorage("dt_lastOpenedDate", null);
+export function useLastOpenedDate(userId) {
+  return useLocalStorage("dt_lastOpenedDate", null, userId);
 }
 
-export function useDailyBonusClaimed() {
-  return useLocalStorage("dt_dailyBonusClaimed", null);
+export function useDailyBonusClaimed(userId) {
+  return useLocalStorage("dt_dailyBonusClaimed", null, userId);
 }
