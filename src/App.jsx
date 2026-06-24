@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Bird, CheckSquare, Calendar, Package, PartyPopper, ShoppingBag } from "lucide-react";
+import { Bird, CheckSquare, Calendar, Coins, Package, PartyPopper, ShoppingBag } from "lucide-react";
 
 import { fetchAllDucks } from "./supabaseClient";
 import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage";
@@ -82,18 +82,31 @@ export default function App() {
 
       // Check if all of yesterday's tasks were completed — award bonus if so
       const yesterdaysTasks = getTasksForDate(yesterday);
-      if (yesterdaysTasks.length > 0 && yesterdaysTasks.every((t) => t.completed)) {
-        addCoins(5);
-        setStartupMessage({
-          text: "You completed all your tasks yesterday!",
-          subtext: "+5 bonus coins added to your balance.",
-        });
-      }
+      const earnedBonus =
+        yesterdaysTasks.length > 0 && yesterdaysTasks.every((t) => t.completed);
+
+      if (earnedBonus) addCoins(5);
 
       // Penalise incomplete tasks by their coin value from the previous day
       const penaltyDay = lastOpenedDate >= yesterday ? lastOpenedDate : yesterday;
       const penaltyAmount = processDayReset(penaltyDay);
       if (penaltyAmount > 0) addCoins(-penaltyAmount);
+
+      if (earnedBonus) {
+        setStartupMessage({
+          type: "bonus",
+          title: "Great work!",
+          text: "You completed all your tasks yesterday!",
+          subtext: "+5 bonus coins added to your balance.",
+        });
+      } else if (penaltyAmount > 0) {
+        setStartupMessage({
+          type: "penalty",
+          title: "Daily reset",
+          text: "Some tasks were unfinished yesterday.",
+          subtext: `-${penaltyAmount} coin${penaltyAmount !== 1 ? "s" : ""} removed from your balance.`,
+        });
+      }
     }
 
     setLastOpenedDate(today);
@@ -203,15 +216,27 @@ export default function App() {
       {startupMessage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-slideUp">
-            <PartyPopper size={40} className="mx-auto mb-3 text-yellow-300" />
-            <h3 className="text-lg font-black text-emerald-400">Great work!</h3>
+            {startupMessage.type === "penalty" ? (
+              <Coins size={40} className="mx-auto mb-3 text-red-300" />
+            ) : (
+              <PartyPopper size={40} className="mx-auto mb-3 text-yellow-300" />
+            )}
+            <h3 className={`text-lg font-black ${
+              startupMessage.type === "penalty" ? "text-red-300" : "text-emerald-400"
+            }`}>
+              {startupMessage.title}
+            </h3>
             <p className="text-slate-300 text-sm mt-2">{startupMessage.text}</p>
-            <p className="text-yellow-300 font-bold mt-3">{startupMessage.subtext}</p>
+            <p className={`font-bold mt-3 ${
+              startupMessage.type === "penalty" ? "text-red-300" : "text-yellow-300"
+            }`}>
+              {startupMessage.subtext}
+            </p>
             <button
               onClick={() => setStartupMessage(null)}
               className="mt-5 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors"
             >
-              Collect
+              {startupMessage.type === "penalty" ? "Continue" : "Collect"}
             </button>
           </div>
         </div>
