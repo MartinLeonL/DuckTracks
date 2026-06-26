@@ -1,13 +1,6 @@
 import { useCallback, useRef } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../supabaseClient.js";
 
-/**
- * Two-way cloud sync against the user_data table.
- *
- * loadFromCloud()  – fetch the whole data blob for this user
- * saveToCloud(data) – upsert the whole blob (debounced 1.5 s)
- * clearCloudData() – wipe the blob
- */
 export function useCloudSync(userId) {
   const debounceRef = useRef(null);
 
@@ -16,14 +9,12 @@ export function useCloudSync(userId) {
       if (!userId) return;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
-        try {
-          await supabase.from("user_data").upsert(
-            { user_id: userId, data, updated_at: new Date().toISOString() },
-            { onConflict: "user_id" }
-          );
-        } catch (e) {
-          console.warn("Cloud save failed:", e);
-        }
+        const { error } = await supabase.from("user_data").upsert(
+          { user_id: userId, data, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
+        if (error) console.error("Cloud save failed:", error.message, error);
+        else console.log("Cloud save OK for", userId);
       }, 1500);
     },
     [userId]
@@ -31,25 +22,29 @@ export function useCloudSync(userId) {
 
   const loadFromCloud = useCallback(async () => {
     if (!userId) return null;
-    try {
-      const { data, error } = await supabase
-        .from("user_data")
-        .select("data")
-        .eq("user_id", userId)
-        .single();
-      if (error) return null;
-      return data?.data ?? null;
-    } catch {
+    const { data, error } = await supabase
+      .from("user_data")
+      .select("data")
+      .eq("user_id", userId)
+      .single();
+    if (error) {
+      // PGRST116 = no rows found — that's fine for a new user
+      if (error.code !== "PGRST116") {
+        console.error("Cloud load failed:", error.message, error);
+      }
       return null;
     }
+    console.log("Cloud load OK:", data?.data);
+    return data?.data ?? null;
   }, [userId]);
 
   const clearCloudData = useCallback(async () => {
     if (!userId) return;
-    await supabase.from("user_data").upsert(
+    const { error } = await supabase.from("user_data").upsert(
       { user_id: userId, data: {}, updated_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
+    if (error) console.error("Cloud clear failed:", error.message);
   }, [userId]);
 
   return { saveToCloud, loadFromCloud, clearCloudData };

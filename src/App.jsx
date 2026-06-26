@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Bird, CheckSquare, Calendar, Coins, Package, PartyPopper, ShoppingBag, UserCircle } from "lucide-react";
+import { CheckSquare, Calendar, Coins, Package, PartyPopper, ShoppingBag, UserCircle } from "lucide-react";
 
 import { fetchAllDucks } from "./supabaseClient.js";
 import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage.js";
@@ -39,7 +39,6 @@ function yesterdayYMD() {
 function LoadingScreen({ message = "Loading DuckTracks…" }) {
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-3">
-      <Bird size={40} className="text-emerald-400 animate-bob" />
       <p className="text-slate-400 text-sm">{message}</p>
     </div>
   );
@@ -54,14 +53,17 @@ export default function App() {
   } = useAuth();
   const userId = user?.id ?? null;
 
+  // refs — declared at top so no hook-order issues
+  const cloudLoadedRef = useRef(false);
+  const dayCheckDoneRef = useRef(false);
+
   const [screen, setScreen] = useState("tasks");
   const [allDucks, setAllDucks] = useState([]);
   const [ducksLoading, setDucksLoading] = useState(true);
   const [ducksError, setDucksError] = useState(null);
   const [startupMessage, setStartupMessage] = useState(null);
-  // true while we're hydrating state from the cloud on first login
   const [cloudLoading, setCloudLoading] = useState(false);
-  const cloudLoadedRef = useRef(false); // prevent double-load on re-renders
+  const [cloudHydrated, setCloudHydrated] = useState(false);
 
   const { coins, setCoins, addCoins, spendCoins, resetCoins } = useCoins(userId);
   const {
@@ -77,6 +79,15 @@ export default function App() {
   const [lastOpenedDate, setLastOpenedDate] = useLastOpenedDate(userId);
 
   const { saveToCloud, loadFromCloud, clearCloudData } = useCloudSync(userId);
+
+  // ─── Reset all per-user state on logout ──────────────────────────────────
+  useEffect(() => {
+    if (!userId) {
+      cloudLoadedRef.current = false;
+      dayCheckDoneRef.current = false;
+      setCloudHydrated(false);
+    }
+  }, [userId]);
 
   // ─── Load duck catalog ───────────────────────────────────────────────────
   useEffect(() => {
@@ -97,11 +108,7 @@ export default function App() {
 
   // ─── Hydrate from cloud on login ─────────────────────────────────────────
   useEffect(() => {
-    if (!userId) {
-      cloudLoadedRef.current = false;
-      return;
-    }
-    if (cloudLoadedRef.current) return;
+    if (!userId || cloudLoadedRef.current) return;
     cloudLoadedRef.current = true;
 
     (async () => {
@@ -114,23 +121,19 @@ export default function App() {
         if (cloudData.lastOpenedDate !== undefined) setLastOpenedDate(cloudData.lastOpenedDate);
       }
       setCloudLoading(false);
+      setCloudHydrated(true);
     })();
   }, [userId]); // eslint-disable-line
 
-  // ─── Save to cloud whenever state changes ────────────────────────────────
-  // Skip saving while we're still loading from cloud (would overwrite with stale localStorage)
-  const isHydrated = !cloudLoading && cloudLoadedRef.current;
-
+  // ─── Save to cloud whenever state changes (only after hydration) ──────────
   useEffect(() => {
-    if (!isHydrated) return;
+    if (!cloudHydrated) return;
     saveToCloud({ coins, tasks, inventory, lastOpenedDate });
-  }, [coins, tasks, inventory, lastOpenedDate, isHydrated]); // eslint-disable-line
+  }, [coins, tasks, inventory, lastOpenedDate, cloudHydrated]); // eslint-disable-line
 
-  // ─── Day-change startup check ─────────────────────────────────────────────
-  // Runs after hydration so we're working with cloud data, not stale localStorage
-  const dayCheckDoneRef = useRef(false);
+  // ─── Day-change startup check (after hydration) ───────────────────────────
   useEffect(() => {
-    if (!userId || !isHydrated || dayCheckDoneRef.current) return;
+    if (!cloudHydrated || dayCheckDoneRef.current) return;
     dayCheckDoneRef.current = true;
 
     const today = todayYMD();
@@ -165,12 +168,7 @@ export default function App() {
     }
 
     setLastOpenedDate(today);
-  }, [isHydrated, userId]); // eslint-disable-line
-
-  // Reset day-check ref on logout so it runs again next login
-  useEffect(() => {
-    if (!userId) dayCheckDoneRef.current = false;
-  }, [userId]);
+  }, [cloudHydrated]); // eslint-disable-line
 
   // ─── Derived state ────────────────────────────────────────────────────────
   const today = todayYMD();
@@ -272,7 +270,6 @@ export default function App() {
         {ducksLoading && screen !== "tasks" && screen !== "account" && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 z-20">
             <div className="text-center">
-              <Bird size={32} className="animate-bob mx-auto mb-2 text-emerald-400" />
               <p className="text-sm text-slate-400">Loading duckies…</p>
             </div>
           </div>
