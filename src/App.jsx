@@ -1,19 +1,19 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Bird, CheckSquare, Calendar, Coins, Package, PartyPopper, ShoppingBag, UserCircle } from "lucide-react";
 
-import { fetchAllDucks } from "./supabaseClient";
-import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage";
-import { useAuth } from "./hooks/useAuth";
-import { useCloudSync } from "./hooks/useCloudSync";
+import { fetchAllDucks } from "./supabaseClient.js";
+import { useCoins, useTasks, useDuckInventory, useLastOpenedDate } from "./hooks/useLocalStorage.js";
+import { useAuth } from "./hooks/useAuth.js";
+import { useCloudSync } from "./hooks/useCloudSync.js";
 
-import CoinDisplay from "./components/CoinDisplay";
-import ClockDisplay from "./components/ClockDisplay";
-import TasksScreen from "./screens/TasksScreen";
-import CalendarScreen from "./screens/CalendarScreen";
-import CollectionScreen from "./screens/CollectionScreen";
-import StoreScreen from "./screens/StoreScreen";
-import AccountScreen from "./screens/AccountScreen";
-import AuthScreen from "./screens/AuthScreen";
+import CoinDisplay from "./components/CoinDisplay.jsx";
+import ClockDisplay from "./components/ClockDisplay.jsx";
+import TasksScreen from "./screens/TasksScreen.jsx";
+import CalendarScreen from "./screens/CalendarScreen.jsx";
+import CollectionScreen from "./screens/CollectionScreen.jsx";
+import StoreScreen from "./screens/StoreScreen.jsx";
+import AccountScreen from "./screens/AccountScreen.jsx";
+import AuthScreen from "./screens/AuthScreen.jsx";
 
 const NAV_ITEMS = [
   { id: "tasks",      label: "Tasks",      Icon: CheckSquare },
@@ -29,28 +29,29 @@ function toLocalYMD(date) {
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
-
-function todayYMD() {
-  return toLocalYMD(new Date());
-}
-
+function todayYMD() { return toLocalYMD(new Date()); }
 function yesterdayYMD() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
   return toLocalYMD(d);
 }
 
-function LoadingScreen() {
+function LoadingScreen({ message = "Loading DuckTracks…" }) {
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-3">
       <Bird size={40} className="text-emerald-400 animate-bob" />
-      <p className="text-slate-400 text-sm">Loading DuckTracks…</p>
+      <p className="text-slate-400 text-sm">{message}</p>
     </div>
   );
 }
 
 export default function App() {
-  const { session, profile, user, loading: authLoading, signIn, signUp, signOut, updatePassword, updateUsername, updateName } = useAuth();
+  const {
+    session, profile, user,
+    loading: authLoading,
+    signIn, signUp, signOut,
+    updatePassword, updateUsername, updateName,
+  } = useAuth();
   const userId = user?.id ?? null;
 
   const [screen, setScreen] = useState("tasks");
@@ -58,33 +59,32 @@ export default function App() {
   const [ducksLoading, setDucksLoading] = useState(true);
   const [ducksError, setDucksError] = useState(null);
   const [startupMessage, setStartupMessage] = useState(null);
+  // true while we're hydrating state from the cloud on first login
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const cloudLoadedRef = useRef(false); // prevent double-load on re-renders
 
-  const { coins, addCoins, spendCoins, resetCoins } = useCoins(userId);
+  const { coins, setCoins, addCoins, spendCoins, resetCoins } = useCoins(userId);
   const {
-    tasks,
-    addTask,
-    updateTask,
-    updateRepeatingTask,
-    deleteTask,
-    completeTask,
-    getTasksForDate,
-    processDayReset,
-    resetTasks,
+    tasks, setTasks,
+    addTask, updateTask, updateRepeatingTask,
+    deleteTask, completeTask,
+    getTasksForDate, processDayReset, resetTasks,
   } = useTasks(userId);
-  const { inventory, addDuck, incrementTrophy, getTrophyCount, resetInventory } = useDuckInventory(userId);
+  const {
+    inventory, setInventory,
+    addDuck, incrementTrophy, getTrophyCount, resetInventory,
+  } = useDuckInventory(userId);
   const [lastOpenedDate, setLastOpenedDate] = useLastOpenedDate(userId);
 
-  const { syncToCloud, loadFromCloud, clearCloudData } = useCloudSync(userId);
+  const { saveToCloud, loadFromCloud, clearCloudData } = useCloudSync(userId);
 
-  // Load ducks when authenticated
+  // ─── Load duck catalog ───────────────────────────────────────────────────
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
     setDucksLoading(true);
     fetchAllDucks()
-      .then((data) => {
-        if (!cancelled) { setAllDucks(data); setDucksLoading(false); }
-      })
+      .then((data) => { if (!cancelled) { setAllDucks(data); setDucksLoading(false); } })
       .catch((err) => {
         if (!cancelled) {
           console.error("Failed to load duckies:", err);
@@ -95,18 +95,51 @@ export default function App() {
     return () => { cancelled = true; };
   }, [session]);
 
-  // Day-change startup check
+  // ─── Hydrate from cloud on login ─────────────────────────────────────────
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      cloudLoadedRef.current = false;
+      return;
+    }
+    if (cloudLoadedRef.current) return;
+    cloudLoadedRef.current = true;
+
+    (async () => {
+      setCloudLoading(true);
+      const cloudData = await loadFromCloud();
+      if (cloudData) {
+        if (cloudData.coins !== undefined) setCoins(cloudData.coins);
+        if (cloudData.tasks !== undefined) setTasks(cloudData.tasks);
+        if (cloudData.inventory !== undefined) setInventory(cloudData.inventory);
+        if (cloudData.lastOpenedDate !== undefined) setLastOpenedDate(cloudData.lastOpenedDate);
+      }
+      setCloudLoading(false);
+    })();
+  }, [userId]); // eslint-disable-line
+
+  // ─── Save to cloud whenever state changes ────────────────────────────────
+  // Skip saving while we're still loading from cloud (would overwrite with stale localStorage)
+  const isHydrated = !cloudLoading && cloudLoadedRef.current;
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveToCloud({ coins, tasks, inventory, lastOpenedDate });
+  }, [coins, tasks, inventory, lastOpenedDate, isHydrated]); // eslint-disable-line
+
+  // ─── Day-change startup check ─────────────────────────────────────────────
+  // Runs after hydration so we're working with cloud data, not stale localStorage
+  const dayCheckDoneRef = useRef(false);
+  useEffect(() => {
+    if (!userId || !isHydrated || dayCheckDoneRef.current) return;
+    dayCheckDoneRef.current = true;
+
     const today = todayYMD();
     if (lastOpenedDate === today) return;
 
     if (lastOpenedDate && lastOpenedDate < today) {
       const yesterday = yesterdayYMD();
-
       const yesterdaysTasks = getTasksForDate(yesterday);
-      const earnedBonus =
-        yesterdaysTasks.length > 0 && yesterdaysTasks.every((t) => t.completed);
+      const earnedBonus = yesterdaysTasks.length > 0 && yesterdaysTasks.every((t) => t.completed);
 
       if (earnedBonus) addCoins(5);
 
@@ -132,8 +165,14 @@ export default function App() {
     }
 
     setLastOpenedDate(today);
-  }, [userId]); // eslint-disable-line
+  }, [isHydrated, userId]); // eslint-disable-line
 
+  // Reset day-check ref on logout so it runs again next login
+  useEffect(() => {
+    if (!userId) dayCheckDoneRef.current = false;
+  }, [userId]);
+
+  // ─── Derived state ────────────────────────────────────────────────────────
   const today = todayYMD();
   const todayTasks = useMemo(() => getTasksForDate(today), [tasks, today]); // eslint-disable-line
   const pondDuckIds = useMemo(() => {
@@ -150,13 +189,10 @@ export default function App() {
     await clearCloudData();
   };
 
-  // Show loading while auth state initialises
+  // ─── Render ───────────────────────────────────────────────────────────────
   if (authLoading) return <LoadingScreen />;
-
-  // Show auth screen if not logged in
-  if (!session) {
-    return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
-  }
+  if (!session) return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
+  if (cloudLoading) return <LoadingScreen message="Syncing your data…" />;
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto bg-slate-900 relative">
@@ -269,15 +305,11 @@ export default function App() {
             ) : (
               <PartyPopper size={40} className="mx-auto mb-3 text-yellow-300" />
             )}
-            <h3 className={`text-lg font-black ${
-              startupMessage.type === "penalty" ? "text-red-300" : "text-emerald-400"
-            }`}>
+            <h3 className={`text-lg font-black ${startupMessage.type === "penalty" ? "text-red-300" : "text-emerald-400"}`}>
               {startupMessage.title}
             </h3>
             <p className="text-slate-300 text-sm mt-2">{startupMessage.text}</p>
-            <p className={`font-bold mt-3 ${
-              startupMessage.type === "penalty" ? "text-red-300" : "text-yellow-300"
-            }`}>
+            <p className={`font-bold mt-3 ${startupMessage.type === "penalty" ? "text-red-300" : "text-yellow-300"}`}>
               {startupMessage.subtext}
             </p>
             <button

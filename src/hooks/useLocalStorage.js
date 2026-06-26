@@ -252,7 +252,7 @@ export function useDuckInventory(userId) {
     [setInventory]
   );
 
-  return { inventory, addDuck, incrementTrophy, ownsDuck, getTrophyCount, resetInventory };
+  return { inventory, setInventory, addDuck, incrementTrophy, ownsDuck, getTrophyCount, resetInventory };
 }
 
 export function useLastOpenedDate(userId) {
