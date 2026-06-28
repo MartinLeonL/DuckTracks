@@ -69,8 +69,8 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md max-h-[90vh] overflow-hidden rounded-2xl glass shadow-2xl animate-slideUp">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-x-hidden">
+      <div className="w-[calc(100vw-2rem)] max-w-md max-h-[90vh] overflow-hidden rounded-2xl glass shadow-2xl animate-slideUp box-border">
         <div className="flex items-center justify-between p-4 border-b border-slate-700/60">
           <h3 className="text-base font-semibold text-slate-100">
             {initialTask ? "Edit Task" : "New Task"}
@@ -143,7 +143,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                 max={480}
                 value={form.durationMinutes}
                 onChange={(e) => set("durationMinutes", Number(e.target.value))}
-                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
               />
             </div>
           )}
