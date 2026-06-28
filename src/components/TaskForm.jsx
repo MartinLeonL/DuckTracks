@@ -70,7 +70,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md glass rounded-2xl shadow-2xl animate-slideUp">
+      <div className="w-full max-w-md max-h-[90vh] overflow-hidden rounded-2xl glass shadow-2xl animate-slideUp">
         <div className="flex items-center justify-between p-4 border-b border-slate-700/60">
           <h3 className="text-base font-semibold text-slate-100">
             {initialTask ? "Edit Task" : "New Task"}
@@ -80,7 +80,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[70vh] overflow-y-auto overflow-x-hidden">
           <div>
             <label htmlFor="task-title" className="block text-xs font-medium text-slate-400 mb-1">Task name</label>
             <input
@@ -89,7 +89,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               placeholder="What do you need to do?"
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
               autoFocus
             />
           </div>
@@ -104,7 +104,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
               onChange={(e) => set("description", e.target.value)}
               placeholder="Add notes or details..."
               rows={2}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+              className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
             />
           </div>
 
@@ -149,15 +149,15 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
           )}
 
           {form.type === "attendance" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="min-w-0">
                 <label htmlFor="task-start" className="block text-xs font-medium text-slate-400 mb-1">Start time</label>
                 <input
                   id="task-start"
                   type="time"
                   value={form.startTime}
                   onChange={(e) => set("startTime", e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
               <div>
@@ -167,7 +167,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="time"
                   value={form.endTime}
                   onChange={(e) => set("endTime", e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             )}

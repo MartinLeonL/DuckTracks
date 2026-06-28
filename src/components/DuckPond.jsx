@@ -192,7 +192,8 @@ export default function DuckPond({ ownedDucks = [] }) {
                 style={{
                   transform: `scaleX(${flipX}) rotate(${tilt * flipX}deg)`,
                   transformOrigin: "center bottom",
-                  transition: "transform 0.3s ease-out",
+                  transition: "none",
+                  willChange: "transform",
                 }}
               >
                 {isMasteryDuck && (
