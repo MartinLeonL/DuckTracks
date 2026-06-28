@@ -157,7 +157,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="time"
                   value={form.startTime}
                   onChange={(e) => set("startTime", e.target.value)}
-                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
               <div>
@@ -167,7 +167,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="time"
                   value={form.endTime}
                   onChange={(e) => set("endTime", e.target.value)}
-                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
-                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             )}
