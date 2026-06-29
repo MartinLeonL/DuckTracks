@@ -32,6 +32,22 @@
     image-rendering: crisp-edges;
   }
 
+  /* Prevent native date/time inputs from overflowing on mobile */
+  input[type="date"],
+  input[type="time"] {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    border-radius: 4px;
+    margin-right: 2px;
+    opacity: 0.6;
+    filter: invert(0.8);
+  }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }

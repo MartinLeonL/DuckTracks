@@ -149,7 +149,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
           )}
 
           {form.type === "attendance" && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
               <div className="min-w-0">
                 <label htmlFor="task-start" className="block text-xs font-medium text-slate-400 mb-1">Start time</label>
                 <input
@@ -157,17 +157,17 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="time"
                   value={form.startTime}
                   onChange={(e) => set("startTime", e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <label htmlFor="task-end" className="block text-xs font-medium text-slate-400 mb-1">End time <span className="text-slate-600">(optional)</span></label>
                 <input
                   id="task-end"
                   type="time"
                   value={form.endTime}
                   onChange={(e) => set("endTime", e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             </div>
@@ -210,7 +210,7 @@ export default function TaskForm({ initialTask, defaultDate, onSubmit, onClose }
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full min-w-0 max-w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
             )}
