@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Coins, Shuffle, Trophy } from "lucide-react";
 import GachaReveal from "../components/GachaReveal";
 
-const ROLL_COST = 1;
+const ROLL_COST = 60;
 
 const RARITY_RATES_ROLL = [
   { rarity: "mythic",    chance: 0.02 },
