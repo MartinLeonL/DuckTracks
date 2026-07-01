@@ -53,7 +53,6 @@ export default function App() {
   } = useAuth();
   const userId = user?.id ?? null;
 
-  // refs — declared at top so no hook-order issues
   const cloudLoadedRef = useRef(false);
   const dayCheckDoneRef = useRef(false);
 
@@ -80,7 +79,6 @@ export default function App() {
 
   const { saveToCloud, loadFromCloud, clearCloudData } = useCloudSync(userId);
 
-  // ─── Reset all per-user state on logout ──────────────────────────────────
   useEffect(() => {
     if (!userId) {
       cloudLoadedRef.current = false;
@@ -89,7 +87,6 @@ export default function App() {
     }
   }, [userId]);
 
-  // ─── Load duck catalog ───────────────────────────────────────────────────
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -106,7 +103,6 @@ export default function App() {
     return () => { cancelled = true; };
   }, [session]);
 
-  // ─── Hydrate from cloud on login ─────────────────────────────────────────
   useEffect(() => {
     if (!userId || cloudLoadedRef.current) return;
     cloudLoadedRef.current = true;
@@ -125,13 +121,11 @@ export default function App() {
     })();
   }, [userId]); // eslint-disable-line
 
-  // ─── Save to cloud whenever state changes (only after hydration) ──────────
   useEffect(() => {
     if (!cloudHydrated) return;
     saveToCloud({ coins, tasks, inventory, lastOpenedDate });
   }, [coins, tasks, inventory, lastOpenedDate, cloudHydrated]); // eslint-disable-line
 
-  // ─── Day-change startup check (after hydration) ───────────────────────────
   useEffect(() => {
     if (!cloudHydrated || dayCheckDoneRef.current) return;
     dayCheckDoneRef.current = true;
@@ -170,7 +164,6 @@ export default function App() {
     setLastOpenedDate(today);
   }, [cloudHydrated]); // eslint-disable-line
 
-  // ─── Derived state ────────────────────────────────────────────────────────
   const today = todayYMD();
   const todayTasks = useMemo(() => getTasksForDate(today), [tasks, today]); // eslint-disable-line
   const pondDuckIds = useMemo(() => {
@@ -187,137 +180,180 @@ export default function App() {
     await clearCloudData();
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  const currentLabel = NAV_ITEMS.find((n) => n.id === screen)?.label ?? "";
+
   if (authLoading) return <LoadingScreen />;
   if (!session) return <AuthScreen onSignIn={signIn} onSignUp={signUp} />;
   if (cloudLoading) return <LoadingScreen message="Syncing your data…" />;
 
   return (
-    <div className="flex flex-col h-full max-w-2xl mx-auto bg-slate-900 relative">
-      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800 glass z-10">
-        <h1 className="text-base font-black text-emerald-400 tracking-tight">DuckTracks</h1>
-        <div className="flex items-center">
-          <ClockDisplay />
-          <CoinDisplay coins={coins} />
+    <div className="h-full w-full bg-slate-950 md:flex">
+      {/* ── Desktop sidebar (hidden on mobile) ────────────────────────── */}
+      <aside className="hidden md:flex md:flex-col md:w-64 lg:w-72 md:shrink-0 border-r border-slate-800 bg-slate-900/60 backdrop-blur-sm">
+        <div className="px-6 py-5 border-b border-slate-800">
+          <h1 className="text-lg font-black text-emerald-400 tracking-tight">DuckTracks</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Tasks → coins → ducks</p>
         </div>
-      </header>
 
-      {ducksError && (
-        <div className="px-4 py-2 bg-red-900/60 text-red-300 text-xs text-center border-b border-red-800">
-          {ducksError}
-        </div>
-      )}
-
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {screen === "tasks" && (
-          <TasksScreen
-            todayTasks={todayTasks}
-            allDucks={allDucks}
-            ownedDuckIds={pondDuckIds}
-            addTask={addTask}
-            updateTask={updateTask}
-            updateRepeatingTask={updateRepeatingTask}
-            deleteTask={deleteTask}
-            completeTask={completeTask}
-            addCoins={addCoins}
-            today={today}
-          />
-        )}
-        {screen === "calendar" && (
-          <CalendarScreen
-            today={today}
-            getTasksForDate={getTasksForDate}
-            addTask={addTask}
-            updateTask={updateTask}
-            updateRepeatingTask={updateRepeatingTask}
-            deleteTask={deleteTask}
-            completeTask={completeTask}
-            addCoins={addCoins}
-          />
-        )}
-        {screen === "collection" && (
-          <CollectionScreen
-            allDucks={allDucks}
-            ownedIds={inventory.owned}
-            getTrophyCount={getTrophyCount}
-          />
-        )}
-        {screen === "store" && (
-          <StoreScreen
-            coins={coins}
-            allDucks={allDucks}
-            ownedIds={inventory.owned}
-            spendCoins={spendCoins}
-            addDuck={addDuck}
-            incrementTrophy={incrementTrophy}
-            getTrophyCount={getTrophyCount}
-          />
-        )}
-        {screen === "account" && (
-          <AccountScreen
-            user={user}
-            profile={profile}
-            coins={coins}
-            ownedDuckCount={inventory.owned.length}
-            onSignOut={signOut}
-            onUpdateUsername={updateUsername}
-            onUpdateName={updateName}
-            onUpdatePassword={updatePassword}
-            onResetData={handleResetData}
-          />
-        )}
-
-        {ducksLoading && screen !== "tasks" && screen !== "account" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 z-20">
-            <div className="text-center">
-              <p className="text-sm text-slate-400">Loading duckies…</p>
-            </div>
-          </div>
-        )}
-      </main>
-
-      <nav className="border-t border-slate-800 glass safe-bottom z-10">
-        <div className="flex">
+        <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV_ITEMS.map(({ id, label, Icon }) => (
             <button
               key={id}
               onClick={() => setScreen(id)}
-              className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-all ${
-                screen === id ? "text-emerald-400" : "text-slate-500 hover:text-slate-300"
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                screen === id
+                  ? "bg-emerald-600/15 text-emerald-400"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               }`}
             >
-              <Icon size={20} strokeWidth={screen === id ? 2.5 : 1.8} />
-              <span className="text-[10px] font-medium">{label}</span>
-              {screen === id && <span className="w-1 h-1 bg-emerald-400 rounded-full" />}
+              <Icon size={18} strokeWidth={screen === id ? 2.5 : 1.8} />
+              {label}
             </button>
           ))}
-        </div>
-      </nav>
+        </nav>
 
-      {startupMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-slideUp">
-            {startupMessage.type === "penalty" ? (
-              <Coins size={40} className="mx-auto mb-3 text-red-300" />
-            ) : (
-              <PartyPopper size={40} className="mx-auto mb-3 text-yellow-300" />
-            )}
-            <h3 className={`text-lg font-black ${startupMessage.type === "penalty" ? "text-red-300" : "text-emerald-400"}`}>
-              {startupMessage.title}
-            </h3>
-            <p className="text-slate-300 text-sm mt-2">{startupMessage.text}</p>
-            <p className={`font-bold mt-3 ${startupMessage.type === "penalty" ? "text-red-300" : "text-yellow-300"}`}>
-              {startupMessage.subtext}
-            </p>
-            <button
-              onClick={() => setStartupMessage(null)}
-              className="mt-5 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors"
-            >
-              {startupMessage.type === "penalty" ? "Continue" : "Collect"}
-            </button>
-          </div>
+        <div className="px-5 py-4 border-t border-slate-800 flex items-center justify-between">
+          <ClockDisplay />
+          <CoinDisplay coins={coins} />
         </div>
-      )}
+      </aside>
+
+      {/* ── Main column: phone-shell on mobile, flexible on desktop ──── */}
+      <div className="flex flex-col h-full w-full max-w-2xl mx-auto md:max-w-none md:mx-0 md:flex-1 bg-slate-900 relative">
+        {/* Mobile header */}
+        <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800 glass z-10 md:hidden">
+          <h1 className="text-base font-black text-emerald-400 tracking-tight">DuckTracks</h1>
+          <div className="flex items-center">
+            <ClockDisplay />
+            <CoinDisplay coins={coins} />
+          </div>
+        </header>
+
+        {/* Desktop header */}
+        <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-slate-800">
+          <h2 className="text-lg font-bold text-slate-100">{currentLabel}</h2>
+        </header>
+
+        {ducksError && (
+          <div className="px-4 py-2 bg-red-900/60 text-red-300 text-xs text-center border-b border-red-800">
+            {ducksError}
+          </div>
+        )}
+
+        <main className="flex-1 flex flex-col overflow-hidden md:overflow-y-auto">
+          <div className="flex-1 flex flex-col md:w-full md:max-w-4xl md:mx-auto">
+            {screen === "tasks" && (
+              <TasksScreen
+                todayTasks={todayTasks}
+                allDucks={allDucks}
+                ownedDuckIds={pondDuckIds}
+                addTask={addTask}
+                updateTask={updateTask}
+                updateRepeatingTask={updateRepeatingTask}
+                deleteTask={deleteTask}
+                completeTask={completeTask}
+                addCoins={addCoins}
+                today={today}
+              />
+            )}
+            {screen === "calendar" && (
+              <CalendarScreen
+                today={today}
+                getTasksForDate={getTasksForDate}
+                addTask={addTask}
+                updateTask={updateTask}
+                updateRepeatingTask={updateRepeatingTask}
+                deleteTask={deleteTask}
+                completeTask={completeTask}
+                addCoins={addCoins}
+              />
+            )}
+            {screen === "collection" && (
+              <CollectionScreen
+                allDucks={allDucks}
+                ownedIds={inventory.owned}
+                getTrophyCount={getTrophyCount}
+              />
+            )}
+            {screen === "store" && (
+              <StoreScreen
+                coins={coins}
+                allDucks={allDucks}
+                ownedIds={inventory.owned}
+                spendCoins={spendCoins}
+                addDuck={addDuck}
+                incrementTrophy={incrementTrophy}
+                getTrophyCount={getTrophyCount}
+              />
+            )}
+            {screen === "account" && (
+              <AccountScreen
+                user={user}
+                profile={profile}
+                coins={coins}
+                ownedDuckCount={inventory.owned.length}
+                onSignOut={signOut}
+                onUpdateUsername={updateUsername}
+                onUpdateName={updateName}
+                onUpdatePassword={updatePassword}
+                onResetData={handleResetData}
+              />
+            )}
+          </div>
+
+          {ducksLoading && screen !== "tasks" && screen !== "account" && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 z-20">
+              <div className="text-center">
+                <p className="text-sm text-slate-400">Loading duckies…</p>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Mobile bottom nav (hidden on desktop — sidebar replaces it) */}
+        <nav className="border-t border-slate-800 glass safe-bottom z-10 md:hidden">
+          <div className="flex">
+            {NAV_ITEMS.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setScreen(id)}
+                className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-all ${
+                  screen === id ? "text-emerald-400" : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                <Icon size={20} strokeWidth={screen === id ? 2.5 : 1.8} />
+                <span className="text-[10px] font-medium">{label}</span>
+                {screen === id && <span className="w-1 h-1 bg-emerald-400 rounded-full" />}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        {startupMessage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+            <div className="glass rounded-2xl p-8 text-center max-w-xs mx-4 animate-slideUp">
+              {startupMessage.type === "penalty" ? (
+                <Coins size={40} className="mx-auto mb-3 text-red-300" />
+              ) : (
+                <PartyPopper size={40} className="mx-auto mb-3 text-yellow-300" />
+              )}
+              <h3 className={`text-lg font-black ${startupMessage.type === "penalty" ? "text-red-300" : "text-emerald-400"}`}>
+                {startupMessage.title}
+              </h3>
+              <p className="text-slate-300 text-sm mt-2">{startupMessage.text}</p>
+              <p className={`font-bold mt-3 ${startupMessage.type === "penalty" ? "text-red-300" : "text-yellow-300"}`}>
+                {startupMessage.subtext}
+              </p>
+              <button
+                onClick={() => setStartupMessage(null)}
+                className="mt-5 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors"
+              >
+                {startupMessage.type === "penalty" ? "Continue" : "Collect"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
